@@ -14,6 +14,8 @@
 </template>
 <script>
 import { defaultDuration, handledEvents, supportsTouchDetector, supportsPassiveDetector, supportsTransitionsDetector } from './helper';
+import { Vue } from "vue";
+
 const axisMap = { left: 'X', right: 'X', top: 'Y', bottom: 'Y' };
 const transformMap = {
   width: 'height',
