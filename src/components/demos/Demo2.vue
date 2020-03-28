@@ -1,8 +1,10 @@
 <template>
-  <vue-drawer-layout
-    :reverse="true">
-    <div class="drawer" slot="drawer">
-      <div class="text">This is drawer</div>
+  <vue-drawer-layout>
+    <div class="drawer" slot="drawer-right">
+      <div class="text">This is right drawer</div>
+    </div>
+    <div class="drawer" slot="drawer-left">
+      <div class="text">This is left drawer</div>
     </div>
     <div class="content" slot="content">
       <div class="text">This is content.</div>

@@ -1,7 +1,10 @@
 <template>
   <div class="drawer-layout">
-    <div class="drawer-wrap" :class="animateStyle" :style="drawerStyle">
-      <slot name="drawer" />
+    <div class="drawer-wrap" v-if="$slots['drawer-left']" :class="animateStyle" ref="leftDrawer" :style="leftDrawerStyle">
+      <slot name="drawer-left" />
+    </div>
+    <div class="drawer-wrap" v-if="$slots['drawer-right']" :class="animateStyle" ref="rightDrawer" :style="rightDrawerStyle">
+      <slot name="drawer-right" />
     </div>
     <div class="content-wrap" :class="contentDrawable ? animateStyle : {}" :style="contentDrawable ? contentStyle : {}">
       <div class="drawer-mask" @click="handleMaskClick" :style="{ opacity: backdropOpacity }" v-show="backdrop && pos"></div>
@@ -72,10 +75,6 @@ export default {
       type: Boolean,
       default: true
     },
-    reverse: {
-      type: Boolean,
-      default: false
-    },
     threshold: {
       type: Number,
       default: 0.6
@@ -88,7 +87,8 @@ export default {
       visible: false,
       moving: false,
       willChange: false,
-      canAnimate: false
+      canAnimate: false,
+      activeDrawer: null
     };
   },
   methods: {
@@ -115,8 +115,20 @@ export default {
       const { moving, willChange } = this;
       return { moving: moving, 'will-change': willChange };
     },
+    leftDrawerStyle() {
+      if (this.activeDrawer !== "left") {
+        return {};
+      }
+      return this.drawerStyle;
+    },
+    rightDrawerStyle() {
+      if (this.activeDrawer !== "right") {
+        return {};
+      }
+      return this.drawerStyle;
+    },
     drawerStyle() {
-      const { zIndex, computedDrawerSize, moveRate, pos, $reverse, direction, transformWithDirection } = this,
+      const { zIndex, computedDrawerSize, moveRate, pos, direction, transformWithDirection } = this,
         initialOffset = Math.ceil(computedDrawerSize * moveRate),
         drawerPos = Math.ceil(pos * moveRate);
       const positionCss = { [transformWithDirection('top')]: 0, [transformWithDirection('bottom')]: 0 };
@@ -125,12 +137,12 @@ export default {
         zIndex,
         [transformWithDirection('width')]: `${computedDrawerSize}px`,
         [direction]: (initialOffset || 0) && `-${initialOffset}px`,
-        transform: `${transformWithDirection('translateX')}(${(drawerPos || 0) && `${$reverse ? '-' : ''}${drawerPos}px`}) translateZ(0)`
+        transform: `${transformWithDirection('translateX')}(${(drawerPos || 0) && `${this.activeDrawer === "right" ? '-' : ''}${drawerPos}px`}) translateZ(0)`
       };
     },
     contentStyle() {
-      const { pos, $reverse, transformWithDirection } = this;
-      return { transform: `${transformWithDirection('translateX')}(${(pos || 0) && `${$reverse ? '-' : ''}${pos}px`}) translateZ(0)` };
+      const { pos, transformWithDirection } = this;
+      return { transform: `${transformWithDirection('translateX')}(${(pos || 0) && `${this.activeDrawer === "right" ? '-' : ''}${pos}px`}) translateZ(0)` };
     },
     backdropOpacity() {
       const { backdropOpacityRange, pos, computedDrawerSize } = this,
@@ -142,20 +154,20 @@ export default {
       return dragDistance / computedDrawerSize;
     },
     direction() {
-      const { drawerPosition, reverse } = this;
-      if (drawerPosition === 'left' && reverse) return 'right';
-      return drawerPosition;
+      return this.activeDrawer;
     },
     axis() {
       const { direction } = this;
       return axisMap[direction];
-    },
-    $reverse() {
-      const { direction } = this;
-      return direction === 'right' || direction === 'bottom';
     }
   },
   mounted() {
+    this.$watch('visible', visible => {
+      if (!visible) {
+        this.activeDrawer = null;
+      }
+    })
+
     const supportsTouch = supportsTouchDetector(),
       supportsTransitions = supportsTransitionsDetector(),
       supportsPassive = supportsPassiveDetector();
@@ -189,7 +201,7 @@ export default {
     }.bind(this);
     // During dragging handler
     const drag = function(e) {
-      const { computedDrawerSize, $reverse, transformWithDirection } = this;
+      const { computedDrawerSize, transformWithDirection } = this;
       t1 = t2;
       t2 = +new Date();
       metric.lastX = metric.nowX;
@@ -197,8 +209,13 @@ export default {
       metric.nowX = supportsTouch ? e.changedTouches[0].clientX : e.clientX;
       metric.nowY = supportsTouch ? e.changedTouches[0].clientY : e.clientY;
 
-      speed = ([1, -1][+$reverse] * (metric[transformWithDirection('nowX')] - metric[transformWithDirection('lastX')])) / (t2 - t1);
-      let pos = startPos + [1, -1][+$reverse] * (metric[transformWithDirection('nowX')] - metric[transformWithDirection('startX')]);
+      if (!this.activeDrawer) {
+        const diff = metric.lastX - metric.nowX;
+        this.activeDrawer = (diff < 0) ? "left" : "right";
+      }
+
+      speed = ([1, -1][+(this.activeDrawer === "right")] * (metric[transformWithDirection('nowX')] - metric[transformWithDirection('lastX')])) / (t2 - t1);
+      let pos = startPos + [1, -1][+(this.activeDrawer === "right")] * (metric[transformWithDirection('nowX')] - metric[transformWithDirection('startX')]);
 
       pos = Math.min(computedDrawerSize, pos);
       pos = Math.max(0, pos);
