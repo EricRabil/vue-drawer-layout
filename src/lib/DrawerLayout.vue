@@ -164,7 +164,7 @@ export default {
   mounted() {
     this.$watch('visible', visible => {
       if (!visible) {
-        this.activeDrawer = null;
+        Vue.set(this, 'activeDrawer', null);
       }
     })
 
@@ -211,7 +211,7 @@ export default {
 
       if (!this.activeDrawer) {
         const diff = metric.lastX - metric.nowX;
-        this.activeDrawer = (diff < 0) ? "left" : "right";
+        Vue.set(this, 'activeDrawer', (diff < 0) ? "left" : "right");
       }
 
       speed = ([1, -1][+(this.activeDrawer === "right")] * (metric[transformWithDirection('nowX')] - metric[transformWithDirection('lastX')])) / (t2 - t1);
