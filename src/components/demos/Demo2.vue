@@ -1,5 +1,5 @@
 <template>
-  <vue-drawer-layout>
+  <vue-drawer-layout :right-width="200" :left-width="200">
     <div class="drawer" slot="drawer-right">
       <div class="text">This is right drawer</div>
     </div>

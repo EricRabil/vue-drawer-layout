@@ -14,7 +14,7 @@
 </template>
 <script>
 import { defaultDuration, handledEvents, supportsTouchDetector, supportsPassiveDetector, supportsTransitionsDetector } from './helper';
-import { Vue } from "vue";
+import Vue from "vue";
 
 const axisMap = { left: 'X', right: 'X', top: 'Y', bottom: 'Y' };
 const transformMap = {
@@ -96,7 +96,7 @@ export default {
   methods: {
     toggle(visible) {
       if (visible === undefined) visible = !this.visible;
-      this.visible = visible;
+      Vue.set(this, 'visible', visible);
       this.pos = visible ? this.computedDrawerSize : 0;
       if (this.canAnimate) this.moving = true;
     },
@@ -167,6 +167,7 @@ export default {
     this.$watch('visible', visible => {
       if (!visible) {
         Vue.set(this, 'activeDrawer', null);
+        setTimeout(() => Vue.set(this, 'activeDrawer', null));
       }
     })
 
@@ -236,6 +237,7 @@ export default {
         if (!(supportsTouch && supportsPassive)) e.preventDefault();
         this.pos = pos;
         this.$emit('slide-move', pos);
+      } else {
       }
     }.bind(this);
     // Stop dragging handler
@@ -245,9 +247,9 @@ export default {
         if (!canMove) {
           let pos = this.pos;
           if (speed > 0) {
-            this.visible = (computedDrawerSize - pos) / speed < defaultDuration || pos > computedDrawerSize * threshold;
+            Vue.set(this, 'visible', (computedDrawerSize - pos) / speed < defaultDuration || pos > computedDrawerSize * threshold);
           } else {
-            this.visible = !((0 - pos) / speed < defaultDuration || pos < computedDrawerSize * threshold);
+            Vue.set(this, 'visible', !((0 - pos) / speed < defaultDuration || pos < computedDrawerSize * threshold));
           }
           if (this.pos > 0 && this.pos < computedDrawerSize && canAnimate) {
             this.moving = true;
@@ -272,6 +274,9 @@ export default {
           if (this.moving) {
             this.moving = false;
             this.willChange = false;
+            if (this.pos === 0) {
+              Vue.set(this, 'activeDrawer', null);
+            }
             this.pos = this.visible ? computedDrawerSize : 0;
             this.$emit('slide-end', this.visible);
           }
